@@ -1,40 +1,52 @@
 This program demonstrates:
 
-✅ Sequential vs Parallel Sorting
-✅ OpenMP Parallel Programming
-✅ Bubble Sort and Merge Sort
+✅ Parallel Reduction using OpenMP
+✅ Sequential vs Parallel operations
+✅ Min, Max, Sum, and Average computations
 ✅ Performance comparison using execution time
 
-The program compares:
+This is a classic HPC (High Performance Computing) program because:
 
-normal sorting
-parallel sorting using OpenMP
-
-and measures:
-
-how much faster parallel execution is
+large data processed
+multiple CPU cores used
+reduction operations parallelized
 🌟 OVERVIEW OF PROGRAM
 
-The program contains:
+The program:
 
-Algorithm	Sequential	Parallel
-Bubble Sort	✅	✅
-Merge Sort	✅	✅
-
-Then:
-
-execution time measured
-speedup calculated
+Creates a huge array
+Fills it with random numbers
+Computes:
+Minimum
+Maximum
+Sum
+Average
+Does each operation:
+Sequentially
+Parallelly using OpenMP
+Measures execution time
 📚 HEADER FILES
-✅ #include <bits/stdc++.h>
+✅ #include<bits/stdc++.h>
 
-Includes all standard C++ libraries:
+Includes all standard C++ libraries.
+
+Provides:
 
 vector
-algorithm
 iostream
+algorithm
 etc.
-✅ #include <omp.h>
+✅ #include<chrono>
+
+Used for:
+
+time measurement
+
+Important for:
+
+performance comparison
+benchmarking
+✅ #include<omp.h>
 
 VERY IMPORTANT.
 
@@ -46,14 +58,9 @@ Without this:
 
 #pragma omp parallel for
 
-won’t work.
+will not work.
 
-✅ #include <chrono>
-
-Used for:
-
-execution time measurement
-🌟 USING NAMESPACE
+🌟 NAMESPACE
 using namespace std;
 using namespace std::chrono;
 
@@ -66,368 +73,294 @@ high_resolution_clock
 without:
 
 std::
-🌟 BUBBLE SORT SECTION
-📚 What is Bubble Sort?
+🌟 MAIN FUNCTION
+int main()
 
-Bubble sort repeatedly:
+Program execution starts here.
 
-compares adjacent elements
-swaps if incorrect
+📏 ARRAY SIZE
+int n = 10000000;
 
-Largest element “bubbles” to end.
+Creates:
 
-🧠 Example
+10 million elements
 
-Array:
+Large enough for:
 
-5 3 1 4
+meaningful parallelism
+HPC demonstration
+📦 ARRAY DECLARATION
+vector<int> arr(n);
 
-Pass 1:
+Creates integer array of size:
 
-5 3 → swap
-3 5 1 4
+10,000,000
 
-5 1 → swap
-3 1 5 4
+Stored dynamically in heap memory.
 
-5 4 → swap
-3 1 4 5
-🌟 Sequential Bubble Sort
-✅ Function
-void sequentialBubbleSort(vector<int>& arr)
+🎲 RANDOM SEED
+srand(time(0));
 
-Sorts array normally.
+Initializes random number generator.
 
-✅ vector<int>& arr
+Without this:
 
-Pass by reference.
+same random numbers every run
+🔄 RANDOM ARRAY GENERATION
+arr[i] = rand() % 10000;
 
-Meaning:
+Values generated:
 
-original array modified directly
-
-No copying.
-
-✅ Size
-int n = arr.size();
-
-Gets array length.
-
-🔄 Outer Loop
-for (int i = 0; i < n - 1; i++)
-
-Controls number of passes.
-
-Bubble sort requires:
-
-n-1 passes
-🔄 Inner Loop
-for (int j = 0; j < n - i - 1; j++)
-
-Compares adjacent elements.
-
-🔍 Comparison
-if (arr[j] > arr[j + 1])
-
-If left element larger:
-
-swap needed
-🔄 Swap
-swap(arr[j], arr[j + 1]);
-
-Exchanges positions.
-
-⚠️ Complexity
-
-Bubble sort:
-
-O(n²)
-
-Very slow for large data.
-
-🌟 PARALLEL BUBBLE SORT
-⚠️ Problem with Normal Parallel Bubble Sort
-
-This is WRONG:
-
-#pragma omp parallel for
-for (j=0...)
-
-because:
-
-adjacent swaps interfere
+0 → 9999
 
 Example:
 
-j=0 swaps arr[0], arr[1]
-j=1 swaps arr[1], arr[2]
+5234
+982
+7643
+🌟 SEQUENTIAL MINIMUM
+⏱️ START TIMER
+auto start = high_resolution_clock::now();
 
-Both use:
+Stores start time.
 
-arr[1]
+✅ INITIAL MIN
+int min_seq = arr[0];
+
+Assume first element is minimum initially.
+
+🔄 LOOP
+for(int i = 1; i < n; i++)
+
+Traverses array.
+
+🔍 MINIMUM COMPARISON
+min_seq = min(min_seq, arr[i]);
+
+Equivalent to:
+
+if(arr[i] < min_seq)
+    min_seq = arr[i];
+🧠 Example
+
+Suppose:
+
+5 2 9 1
+
+Process:
+
+min = 5
+min = 2
+min = 2
+min = 1
+⏱️ END TIMER
+auto end = high_resolution_clock::now();
+📏 DURATION
+duration_cast<milliseconds>
+
+Computes execution time.
+
+🖨️ OUTPUT
+cout << "Sequential Min"
+
+Displays:
+
+minimum value
+execution time
+🌟 PARALLEL MINIMUM
+🚀 KEY CONCEPT: REDUCTION
+⚠️ Problem in Parallel Min
+
+Suppose multiple threads do:
+
+min_par = min(...)
+
+simultaneously.
 
 Race condition occurs.
 
 ✅ Solution:
-Odd-Even Transposition Sort
+OpenMP Reduction
+🌟 Initialization
+int min_par = INT_MAX;
 
-This is parallel-safe bubble sort.
+Start with:
 
-🌟 EVEN PHASE
-for (int j = 0; j < n - 1; j += 2)
+very large value
+🚀 MOST IMPORTANT LINE
+#pragma omp parallel for reduction(min:min_par)
+🧠 What does reduction do?
 
-Compares:
+Each thread gets:
 
-(0,1)
-(2,3)
-(4,5)
+private local copy
 
-These pairs are independent.
+of:
 
-🧠 Why safe?
+min_par
 
-No overlapping indices.
+Then OpenMP combines results automatically.
 
-Example:
+🧵 Example
 
-(0,1)
-(2,3)
+Array:
 
-No shared elements.
+5 2 9 1 7 3
 
-So:
+4 threads:
 
-parallel execution safe
-🚀 OpenMP Parallelism
-#pragma omp parallel for
+Thread	Elements	Local Min
+T1	5 2	2
+T2	9 1	1
+T3	7	7
+T4	3	3
 
-OpenMP divides iterations across threads.
+Final reduction:
 
-Example:
+min(2,1,7,3)=1
+🌟 Why Reduction Important?
 
-Thread	Work
-T1	(0,1)
-T2	(2,3)
-T3	(4,5)
-🌟 ODD PHASE
-for (int j = 1; j < n - 1; j += 2)
+Without reduction:
 
-Compares:
+threads overwrite shared variable
 
-(1,2)
-(3,4)
-(5,6)
+Incorrect results occur.
 
-Again independent.
+🌟 PARALLEL MAXIMUM
+✅ Sequential Max
+max_seq = max(max_seq, arr[i]);
 
-🧠 Complete Bubble Sort Flow
+Finds largest element.
 
-Pass:
+🚀 Parallel Max
+#pragma omp parallel for reduction(max:max_par)
 
-Even phase
-Odd phase
+Each thread computes local maximum.
 
-Repeated:
+OpenMP merges:
 
-n times
-
-Eventually sorted.
-
-🌟 MERGE SORT SECTION
-📚 What is Merge Sort?
-
-Divide and conquer algorithm.
-
-Steps:
-
-Divide array
-Recursively sort halves
-Merge sorted halves
-🧠 Example
-8 3 5 1
-
-Split:
-
-8 3 | 5 1
-
-Further:
-
-8 | 3
-5 | 1
-
-Merge:
-
-3 8
-1 5
-
-Final:
-
-1 3 5 8
-🌟 MERGE FUNCTION
-✅ Function
-mergeVectors(left, right)
-
-Combines:
-
-two sorted arrays
-
-into one sorted array.
-
-🔄 Two Pointers
-int i = 0, j = 0;
-
-Track positions.
-
-🔍 Comparison
-if (left[i] <= right[j])
-
-Smaller element added first.
-
-🔄 Push Element
-result.push_back(...)
-
-Adds element to merged array.
-
-🌟 Sequential Merge Sort
-✅ Base Case
-if (arr.size() <= 1)
-
-Single element already sorted.
-
-✅ Midpoint
-int mid = arr.size() / 2;
-
-Splits array.
-
-✅ Left Half
-vector<int> left(...)
-✅ Right Half
-vector<int> right(...)
-🔄 Recursive Calls
-left = sequentialMergeSort(left);
-
-Sorts left recursively.
-
-🔄 Merge
-return mergeVectors(left, right);
-
-Combines sorted halves.
-
-⚠️ Complexity
-
-Merge sort:
-
-O(n log n)
-
-Much faster than bubble sort.
-
-🌟 PARALLEL MERGE SORT
-🚀 Key Idea
-
-Left half and right half are independent.
-
-Can run simultaneously.
-
-✅ Threshold
-if (arr.size() <= 1000)
-
-Small arrays:
-
-use sequential version
-⚠️ Why?
-
-Creating threads has overhead.
-
-For tiny arrays:
-
-parallel slower
-🌟 PARALLEL SECTIONS
-✅ MOST IMPORTANT PART
-#pragma omp parallel sections
-
-Creates parallel region.
-
-🌟 SECTION 1
-#pragma omp section
-left = parallelMergeSort(left);
-
-One thread sorts left half.
-
-🌟 SECTION 2
-#pragma omp section
-right = parallelMergeSort(right);
-
-Another thread sorts right half.
-
+largest value
 🧠 Example
 
 Array:
 
-8 3 5 1
+3 9 2 11
 
-Thread 1:
+Threads:
 
-8 3
+T1 → 9
+T2 → 11
 
-Thread 2:
+Final:
 
-5 1
+max(9,11)=11
+🌟 SEQUENTIAL SUM
+✅ Sum Variable
+long long sum_seq = 0;
 
-Both simultaneously.
+long long used because:
 
-🌟 MAIN FUNCTION
-✅ Array Size
-int n = 100000;
+sum may become very large
+🔄 Accumulation
+sum_seq += arr[i];
 
-100k elements.
+Adds all elements.
 
-🌟 BASE ARRAY
-vector<int> base(n);
+🧠 Example
+1 2 3 4
 
-Stores original random data.
+Process:
 
-🔄 Random Initialization
-rand() % 1000
+0+1=1
+1+2=3
+3+3=6
+6+4=10
+🌟 PARALLEL SUM
+🚀 Reduction
+#pragma omp parallel for reduction(+:sum_par)
+🧠 What happens?
 
-Values:
+Each thread:
 
-0 → 999
-⚠️ VERY IMPORTANT
-✅ SAME INPUT FOR FAIR COMPARISON
-vector<int> arr1 = base;
-vector<int> arr2 = base;
+computes local partial sum
 
-Both algorithms use identical data.
+Then OpenMP:
 
-Otherwise:
+adds all local sums
+🧵 Example
 
-comparison unfair
-⏱️ TIMING
-✅ Start Time
-auto start = high_resolution_clock::now();
-✅ End Time
-auto end = high_resolution_clock::now();
-✅ Duration
-duration_cast<milliseconds>
+Array:
 
-Measures execution time.
+1 2 3 4 5 6
 
-🌟 SPEEDUP
-duration1 / duration2
+Threads:
+
+Thread	Elements	Local Sum
+T1	1 2	3
+T2	3 4	7
+T3	5 6	11
+
+Final:
+
+3+7+11 = 21
+🌟 AVERAGE
+📚 Formula
+Average = Sum / Number of Elements
+✅ Sequential Average
+
+First:
+
+sum_seq_avg += arr[i];
+
+Then:
+
+double avg_seq = (double)sum_seq_avg / n;
+⚠️ Why (double)?
+
+Without it:
+
+integer division occurs
 
 Example:
 
-400ms / 100ms = 4x
+5/2 = 2
 
-Parallel:
+With double:
 
-4 times faster
+5/2 = 2.5
+🌟 PARALLEL AVERAGE
+
+Uses:
+
+reduction(+:sum_par_avg)
+
+Parallel sum computed first.
+
+Then:
+
+avg = sum / n
+🌟 TIMING MECHANISM
+✅ Start Time
+high_resolution_clock::now()
+
+Stores current precise time.
+
+✅ End Time
+high_resolution_clock::now()
+
+after computation.
+
+✅ Duration
+duration_cast<milliseconds>
+
+Computes elapsed milliseconds.
+
 🌟 OPENMP CONCEPTS
-✅ #pragma omp parallel for
+🚀 #pragma omp parallel for
 
-Splits loop across threads.
+Splits loop iterations among threads.
 
-🧠 Example
+🧵 Example
 
 Loop:
 
@@ -440,20 +373,34 @@ T1	0,1
 T2	2,3
 T3	4,5
 T4	6,7
-✅ #pragma omp parallel sections
+🌟 REDUCTION CLAUSE
+🚀 Syntax
+reduction(operator:variable)
+🌟 Supported Operators
+Operator	Meaning
++	sum
+*	multiplication
+min	minimum
+max	maximum
+🌟 Why Reduction Needed?
 
-Different code sections run simultaneously.
+Because:
 
-🧠 Example
+multiple threads update same variable
 
-Thread 1:
+Reduction avoids:
 
-left half
+race conditions
+🌟 WHAT IS RACE CONDITION?
 
-Thread 2:
+When multiple threads:
 
-right half
-🌟 Why Parallelism Helps?
+simultaneously modify shared data
+
+leading to:
+
+incorrect results
+🌟 PERFORMANCE BENEFIT
 
 Sequential:
 
@@ -463,47 +410,55 @@ Parallel:
 
 multiple CPU cores
 
-Less total execution time.
+So:
 
-🌟 Why Merge Sort Parallelizes Better?
+less execution time
+🌟 WHY THIS IS HPC?
 
-Bubble sort:
+HPC = High Performance Computing.
 
-many dependencies
+This program:
 
-Merge sort:
+processes huge datasets
+uses parallel CPU cores
+improves performance
 
-independent recursive halves
+Therefore:
 
-So merge sort scales much better.
-
+HPC application
 🌟 FINAL OUTPUT EXAMPLE
-=== BUBBLE SORT ===
-Sequential: 3200 ms
-Parallel: 1100 ms
-Speedup: 2.9x
+Sequential Min: 0 Time: 25 ms
+Parallel Min:   0 Time: 7 ms
 
-=== MERGE SORT ===
-Sequential: 45 ms
-Parallel: 18 ms
-Speedup: 2.5x
+Sequential Max: 9999 Time: 24 ms
+Parallel Max:   9999 Time: 6 ms
+
+Sequential Sum: 499938282 Time: 30 ms
+Parallel Sum:   499938282 Time: 9 ms
+
+Sequential Avg: 4999.38 Time: 31 ms
+Parallel Avg:   4999.38 Time: 9 ms
 🎯 Viva One-Liners
+What is reduction?
+
+Reduction combines thread-local results into one final value safely.
+
+Why use reduction?
+
+To avoid race conditions during parallel updates.
+
 What is OpenMP?
 
 OpenMP is an API for shared-memory parallel programming.
 
-Why odd-even transposition used?
+Why parallel faster?
 
-Normal bubble sort causes race conditions during parallel swaps.
+Multiple CPU cores process data simultaneously.
 
-Why merge sort parallelizable?
+Why long long used for sum?
 
-Left and right halves are independent.
+Sum may exceed integer range.
 
-Why threshold used?
+What is race condition?
 
-To avoid excessive thread creation overhead.
-
-What is speedup?
-
-Ratio of sequential execution time to parallel execution time.
+Multiple threads modifying shared data simultaneously causing incorrect results.
