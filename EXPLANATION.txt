@@ -1,0 +1,581 @@
+🌟 PRACTICAL 4: CUDA Vector Addition and Matrix Multiplication
+📌 Problem Statement
+Write CUDA Programs for:
+
+
+Addition of two large vectors
+
+
+Matrix Multiplication using CUDA C
+
+
+This practical demonstrates:
+
+
+GPU programming
+
+
+Parallel computing
+
+
+CUDA kernels
+
+
+Thread hierarchy
+
+
+GPU memory management
+
+
+
+🌟 WHAT IS CUDA?
+CUDA stands for:
+Compute Unified Device Architecture
+Developed by:
+NVIDIA CUDA
+CUDA allows:
+C/C++ programs to run on GPU
+Normally:
+
+
+CPU executes C++ code
+
+
+With CUDA:
+
+
+GPU also executes code
+
+
+
+🌟 WHY GPU IS FAST?
+
+✅ CPU
+CPU has:
+
+
+few cores
+
+
+optimized for complex tasks
+
+
+Example:
+4–16 cores
+Good for:
+
+
+operating systems
+
+
+sequential logic
+
+
+
+✅ GPU
+GPU has:
+
+
+thousands of small cores
+
+
+Good for:
+same operation on huge data
+Example:
+
+
+vector addition
+
+
+matrix multiplication
+
+
+AI/ML
+
+
+deep learning
+
+
+
+🌟 WHAT IS PARALLEL COMPUTING?
+Sequential:
+One task at a time
+Parallel:
+Many tasks simultaneously
+Example:
+Vector addition:
+A = [1 2 3 4]B = [5 6 7 8]
+Sequential:
+1+52+63+74+8
+GPU Parallel:
+all additions together
+Huge speed improvement.
+
+🌟 GOOGLE COLAB GPU
+Google Colab provides:
+free NVIDIA GPU
+Usually:
+
+
+Tesla T4
+
+
+Tesla P100
+
+
+Tesla V100
+
+
+
+🌟 STEP-BY-STEP SETUP
+
+✅ Step 1: Open Colab
+Open:
+Google Colab
+Create notebook.
+
+✅ Step 2: Enable GPU
+Runtime → Change Runtime Type → GPU
+This connects:
+NVIDIA GPU to notebook
+
+✅ Step 3: Check CUDA Compiler
+!nvcc --version
+
+🌟 WHAT IS NVCC?
+nvcc =
+NVIDIA CUDA Compiler
+Compiles:
+.cu files
+like:
+g++ compiles .cpp
+
+✅ Example Output
+Cuda compilation tools, release 11.7
+Means CUDA installed correctly.
+
+✅ Step 4: Install nvcc4jupyter
+!pip install nvcc4jupyter
+Allows:
+running CUDA inside notebook cells
+
+✅ Step 5: Load Extension
+%load_ext nvcc4jupyter
+Enables:
+CUDA support in notebook
+
+🌟 CODE EXPLANATION
+
+🌟 FILE CREATION
+%%writefile cuda_program.cu
+Creates:
+CUDA source file
+named:
+cuda_program.cu
+.cu =
+CUDA file extension
+
+🌟 HEADER FILES
+
+✅ #include <iostream>
+Provides:
+coutcin
+
+✅ #include <cuda.h>
+Provides:
+CUDA APIs
+Needed for:
+
+
+cudaMalloc
+
+
+cudaMemcpy
+
+
+kernels
+
+
+
+🌟 BLOCK SIZE
+#define BLOCK_SIZE 2
+Defines:
+threads per block dimension
+Used in:
+
+
+vector addition
+
+
+matrix multiplication
+
+
+
+🌟 CUDA EXECUTION MODEL
+CUDA organizes execution into:
+Grid → Blocks → Threads
+
+🌟 THREAD
+Smallest execution unit.
+Each thread:
+executes kernel code
+
+🌟 BLOCK
+Group of threads.
+Example:
+BLOCK_SIZE = 2
+Matrix multiplication:
+2x2 = 4 threads/block
+
+🌟 GRID
+Collection of blocks.
+Entire GPU execution launched as:
+grid of blocks
+
+🌟 VECTOR ADDITION KERNEL
+
+✅ Kernel Definition
+__global__ void vectorAdd(...)
+
+🌟 What is __global__?
+Means:
+function runs on GPU
+Called from CPU.
+
+🌟 KERNEL
+GPU function.
+Executed:
+by thousands of threads
+
+🌟 Thread Index Calculation
+int i = blockIdx.x * blockDim.x + threadIdx.x;
+MOST IMPORTANT CUDA FORMULA.
+
+🌟 Special CUDA Variables
+
+✅ blockIdx.x
+Current block number.
+
+✅ blockDim.x
+Threads per block.
+
+✅ threadIdx.x
+Current thread inside block.
+
+🌟 Example
+Suppose:
+BLOCK_SIZE = 2numBlocks = 3
+Threads:
+BlockThreadi000011102113204215
+Each thread handles:
+one vector element
+
+🌟 BOUNDARY CHECK
+if (i < N)
+Needed because:
+extra threads may exist
+Prevents:
+out-of-bounds memory access
+
+🌟 VECTOR ADDITION
+C[i] = A[i] + B[i];
+Each GPU thread computes:
+one addition
+
+🌟 HOST VS DEVICE MEMORY
+
+✅ Host
+Host =
+CPU memory (RAM)
+Variables:
+hA hB hC
+
+✅ Device
+Device =
+GPU memory
+Variables:
+dA dB dC
+
+🌟 HOST ARRAY CREATION
+int *hA = new int[N];
+Allocates CPU memory.
+
+🌟 GPU MEMORY ALLOCATION
+cudaMalloc(&dA, size);
+Allocates:
+GPU memory
+Equivalent of:
+malloc()
+but on GPU.
+
+🌟 DATA TRANSFER
+cudaMemcpy(dA, hA, size, cudaMemcpyHostToDevice);
+Copies:
+CPU → GPU
+
+🌟 Why Needed?
+GPU cannot directly access CPU memory.
+Data must be copied.
+
+🌟 Kernel Launch
+vectorAdd<<<numBlocks, BLOCK_SIZE>>>(...)
+CUDA launch syntax.
+
+🌟 Meaning
+<<< blocks, threads_per_block >>>
+Example:
+<<<3,2>>>
+means:
+3 blocks2 threads/block6 total threads
+
+🌟 Number of Blocks
+(N + BLOCK_SIZE - 1) / BLOCK_SIZE
+Rounds up division.
+
+🌟 Example
+If:
+N = 5BLOCK_SIZE = 2
+Need:
+3 blocks
+Because:
+2+2+1 elements
+
+🌟 Copy Back Result
+cudaMemcpy(hC, dC, size, cudaMemcpyDeviceToHost);
+Copies:
+GPU → CPU
+
+🌟 MATRIX MULTIPLICATION
+
+🌟 Goal
+Compute:
+C=A×BC = A \times BC=A×B
+
+🌟 Matrix Multiplication Formula
+Cij=∑k=0N−1AikBkjC_{ij} = \sum_{k=0}^{N-1} A_{ik}B_{kj}Cij​=∑k=0N−1​Aik​Bkj​
+
+🌟 Example
+If:
+A=[1234]A =
+\begin{bmatrix}
+1 & 2 \\
+3 & 4
+\end{bmatrix}A=[13​24​]
+B=[5678]B =
+\begin{bmatrix}
+5 & 6 \\
+7 & 8
+\end{bmatrix}B=[57​68​]
+Then:
+C00=1×5+2×7C_{00} = 1\times5 + 2\times7C00​=1×5+2×7
+
+🌟 Matrix Kernel
+__global__ void matrixMul(...)
+Each thread computes:
+one matrix cell
+
+🌟 Row and Column Calculation
+int row = blockIdx.y * blockDim.y + threadIdx.y;int col = blockIdx.x * blockDim.x + threadIdx.x;
+Determines:
+which matrix element this thread computes
+
+🌟 Dot Product Loop
+for (int n = 0; n < N; ++n)
+Computes:
+row-column multiplication sum
+
+🌟 Example
+For:
+C[0][1]
+Thread computes:
+A[0][0]*B[0][1]+A[0][1]*B[1][1]+...
+
+🌟 2D THREAD ORGANIZATION
+
+✅ threadBlock
+dim3 threadBlock(BLOCK_SIZE, BLOCK_SIZE);
+Creates:
+2D block
+Example:
+2x2 threads
+
+✅ Grid
+dim3 grid(K, K);
+Creates:
+KxK blocks
+
+🌟 TOTAL THREADS
+Total threads:
+N x N
+One thread per matrix element.
+
+🌟 WHY MATRIX MULTIPLICATION IMPORTANT?
+Used in:
+
+
+AI
+
+
+Deep Learning
+
+
+Neural Networks
+
+
+Graphics
+
+
+Scientific Computing
+
+
+GPU accelerates it massively.
+
+🌟 MEMORY CLEANUP
+
+✅ CPU Cleanup
+delete[]
+Frees RAM.
+
+✅ GPU Cleanup
+cudaFree()
+Frees GPU memory.
+VERY IMPORTANT.
+Otherwise:
+GPU memory leak
+
+🌟 COMPILATION COMMAND
+!nvcc cuda_program.cu -o cuda_program && ./cuda_program
+
+🌟 Meaning
+
+✅ nvcc
+CUDA compiler.
+
+✅ -o cuda_program
+Output executable name.
+
+✅ &&
+Run second command only if compile successful.
+
+✅ ./cuda_program
+Executes program.
+
+🌟 SAMPLE VECTOR ADDITION
+Input:
+A = [0 1]B = [0 2]
+Output:
+[0 3]
+Because:
+0+0=01+2=3
+
+🌟 SAMPLE MATRIX OUTPUT
+All values in A:
+2
+All values in B:
+4
+For 6 multiplications:
+2×4+2×4+2×4+2×4+2×4+2×42\times4 + 2\times4 + 2\times4 + 2\times4 + 2\times4 + 2\times42×4+2×4+2×4+2×4+2×4+2×4
+=48= 48=48
+Thus every cell:
+48
+
+🌟 WHY CUDA FAST?
+CPU:
+few cores
+GPU:
+thousands of threads
+Operations happen simultaneously.
+
+🌟 APPLICATIONS
+CUDA used in:
+
+
+AI/ML
+
+
+Deep Learning
+
+
+TensorFlow
+
+
+PyTorch
+
+
+Image Processing
+
+
+Scientific Simulations
+
+
+Autonomous Vehicles
+
+
+
+🌟 IMPORTANT DEFINITIONS
+
+✅ CUDA
+Parallel computing platform by NVIDIA.
+
+✅ Kernel
+GPU function executed by many threads.
+
+✅ Thread
+Smallest execution unit.
+
+✅ Block
+Group of threads.
+
+✅ Grid
+Collection of blocks.
+
+✅ Host
+CPU memory/system.
+
+✅ Device
+GPU memory/system.
+
+✅ cudaMalloc
+Allocates GPU memory.
+
+✅ cudaMemcpy
+Copies data between CPU and GPU.
+
+✅ nvcc
+CUDA compiler.
+
+🌟 Viva Questions
+
+❓ Why use GPU?
+
+GPUs perform massive parallel operations faster.
+
+
+❓ What is a CUDA kernel?
+
+A function executed on GPU by many threads.
+
+
+❓ Why cudaMemcpy needed?
+
+CPU and GPU have separate memory.
+
+
+❓ Difference between host and device?
+
+Host = CPU, Device = GPU.
+
+
+❓ Why boundary check needed?
+
+Prevents invalid memory access by extra threads.
+
+
+❓ Why matrix multiplication important?
+
+Core operation in AI and scientific computing.
+
+
+❓ What does __global__ mean?
+
+Function runs on GPU and called from CPU.
