@@ -1,95 +1,87 @@
-This notebook builds a Recurrent Neural Network (RNN) model to predict Google stock prices using previous stock prices.
+This notebook builds a Sentiment Analysis Deep Learning Model using the IMDB movie reviews dataset.
 
-I’ll explain every line, concept, and logic in very small details.
+The goal is:
 
-OVERALL GOAL OF THIS PROJECT
+Predict whether a movie review is positive or negative.
 
-The notebook tries to answer:
+This is a Binary Classification Problem.
 
-“Can we predict tomorrow’s Google stock opening price using previous 60 days’ prices?”
+I’ll explain:
 
-This is a Time Series Forecasting problem because:
+every line
+every concept
+every library
+every machine learning idea
+every deep learning concept
+every preprocessing step
+in very detailed and simple language.
+WHAT IS SENTIMENT ANALYSIS?
 
-Data changes over time
-Previous values influence future values
+Sentiment Analysis means:
 
-Example:
+Understanding emotions/opinions from text.
 
-Day	Open Price
-Day 1	100
-Day 2	102
-Day 3	101
-Day 4	?
+Examples:
 
-The model learns patterns from past prices.
+Review	Sentiment
+"Movie was amazing"	Positive
+"Worst film ever"	Negative
 
-WHAT IS RNN?
+Applications:
 
-RNN = Recurrent Neural Network
+product reviews
+YouTube comments
+Twitter analysis
+customer feedback
+chatbot understanding
+OVERALL FLOW OF THIS NOTEBOOK
 
-It is a neural network specially designed for:
-
-sequential data
-time series
-speech
-text
-stock prices
-
-Why?
-
-Because RNN remembers previous information.
-
-Unlike normal neural networks:
-
-Traditional NN → treats all inputs independently
-RNN → remembers previous inputs
-
-Example:
-
-To predict today’s stock price:
-
-yesterday’s price matters
-last week’s trend matters
-last 60 days matter
-
-RNN captures this sequence dependency.
-
-COMPLETE FLOW OF NOTEBOOK
-
-The notebook performs these steps:
+The notebook does:
 
 Import libraries
-Load dataset
-Extract Open prices
-Normalize data
-Split train/test
-Create sequences of 60 days
-Reshape data for RNN
-Build RNN model
+Load IMDB dataset
+Clean missing data
+Clean text
+Convert labels to numbers
+Convert text into vectors using TF-IDF
+Split training/testing data
+Build deep learning model
 Train model
-Predict prices
-Convert predictions back to original scale
-Plot graph
-CELL 0 — IMPORT LIBRARIES
+Plot accuracy graph
+Evaluate accuracy
+VERY IMPORTANT CONCEPT
+
+Computers do NOT understand text directly.
+
+Example:
+
+"I love this movie"
+
+Computer cannot process this sentence directly.
+
+We must convert text → numbers.
+
+This notebook uses:
+
+TF-IDF Vectorization
+
+Then neural network learns from those numbers.
+
+CELL 1 — IMPORT LIBRARIES
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, SimpleRNN
+import re
 1. NUMPY
 import numpy as np
 
 NumPy is used for:
 
+numerical calculations
 arrays
-numerical computations
-matrix operations
+matrices
 
-Why needed?
-
-Deep learning models work efficiently with arrays.
+Deep learning models work with numbers internally.
 
 Example:
 
@@ -100,260 +92,45 @@ import pandas as pd
 Pandas is used for:
 
 reading CSV files
-handling tables/dataframes
-cleaning data
+handling tables
+cleaning datasets
 
-Example:
+Example dataframe:
 
-Date	Open
-1-Jan	100
-
-This table becomes a Pandas DataFrame.
-
+review	sentiment
+good movie	positive
 3. MATPLOTLIB
 import matplotlib.pyplot as plt
 
-Used for plotting graphs.
+Used for graphs and visualization.
 
 Later:
 
-red line = real prices
-blue line = predicted prices
-4. MINMAXSCALER
-from sklearn.preprocessing import MinMaxScaler
+training accuracy graph
+validation accuracy graph
+4. RE (REGULAR EXPRESSIONS)
+import re
 
-Used for normalization/scaling.
+Used for:
 
-Neural networks work better when data is small.
-
-Example:
-
-Original prices:
-
-1000, 1200, 1500
-
-Scaled between 0 and 1:
-
-0.0, 0.4, 1.0
-WHY SCALING IS IMPORTANT
-
-Without scaling:
-
-gradients become unstable
-training becomes slow
-optimization becomes difficult
-
-Scaling improves:
-
-convergence speed
-learning efficiency
-accuracy
-5. SEQUENTIAL MODEL
-from tensorflow.keras.models import Sequential
-
-Sequential means:
-
-layers are added one after another
-
-Like:
-
-Input → RNN → RNN → Dense → Output
-
-6. DENSE LAYER
-from tensorflow.keras.layers import Dense
-
-Dense = Fully connected layer.
-
-Used for final prediction.
+text cleaning
+removing symbols
+removing HTML tags
 
 Example:
 
-50 neurons → 1 output price
-7. SIMPLERNN
-from tensorflow.keras.layers import SimpleRNN
+"This movie!!!"
 
-This is the actual RNN layer.
+becomes:
 
-It processes sequential/time data.
+"This movie"
+IMPORTS FROM SCIKIT-LEARN
+from sklearn.model_selection import train_test_split
 
-CELL 1 — LOAD DATASET
-df = pd.read_csv("Google_Stock_Price.csv", thousands=',')
+Used to divide dataset into:
 
-Reads CSV file.
-
-WHAT IS CSV?
-
-CSV = Comma Separated Values
-
-Example:
-
-Date,Open,Close
-1-Jan,1000,1010
-thousands=','
-
-Some prices may contain commas.
-
-Example:
-
-1,234.56
-
-This tells pandas:
-
-commas are separators
-not text
-DATAFRAME
-
-After reading:
-
-df
-
-becomes something like:
-
-Date	Open	High	Low	Close
-TAKING ONLY OPEN COLUMN
-data = df['Open'].values.reshape(-1, 1)
-WHY ONLY OPEN?
-
-The notebook predicts:
-
-opening stock price
-
-So only “Open” feature is used.
-
-df['Open']
-
-Extracts Open column.
-
-Example:
-
-[100, 102, 101]
-.values
-
-Converts pandas series → NumPy array.
-
-.reshape(-1,1)
-
-Very important.
-
-Transforms:
-
-[100,102,101]
-
-into:
-
-[[100],
- [102],
- [101]]
-
-Why?
-
-Machine learning models expect 2D arrays.
-
-WHAT DOES -1 MEAN?
-
-Python automatically calculates row count.
-
-Example:
-
-reshape(-1,1)
-
-means:
-
-unknown rows
-exactly 1 column
-CELL 2 — SCALING DATA
-scaler = MinMaxScaler(feature_range=(0,1))
-
-Creates scaler object.
-
-WHAT DOES THIS DO?
-
-Uses formula:
-
-x
-scaled
-	​
-
-=
-x
-max
-	​
-
-−x
-min
-	​
-
-x−x
-min
-	​
-
-	​
-
-
-This converts all values between 0 and 1.
-
-CLEANING DATA
-data = pd.to_numeric(df['Open'], errors='coerce').dropna().values.reshape(-1, 1)
-pd.to_numeric()
-
-Converts values into numbers.
-
-errors='coerce'
-
-If invalid values exist:
-
-Example:
-
-"GOOGL"
-
-It becomes:
-
-NaN
-
-instead of crashing.
-
-.dropna()
-
-Removes NaN values.
-
-WHY CLEANING IS IMPORTANT
-
-Neural networks cannot train on:
-
-text
-missing values
-corrupted data
-SCALING
-data_scaled = scaler.fit_transform(data)
-
-Two operations happen:
-
-fit
-learns min/max
-transform
-scales data
-EXAMPLE
-
-Original:
-
-Price
-100
-200
-300
-
-Scaled:
-
-Price
-0.0
-0.5
-1.0
-CELL 3 — TRAIN TEST SPLIT
-train_size = int(len(data_scaled) * 0.8)
-
-Uses:
-
-80% for training
-20% for testing
+training data
+testing data
 WHY SPLIT DATA?
 
 Training data:
@@ -362,221 +139,532 @@ model learns patterns
 
 Testing data:
 
-checks performance on unseen data
-EXAMPLE
+checks how good model performs on unseen reviews
+TF-IDF IMPORT
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-If 1000 rows:
+VERY IMPORTANT.
 
-800 → training
-200 → testing
-SPLITTING
-train_data = data_scaled[:train_size]
-test_data = data_scaled[train_size:]
-:train_size
+Used to convert text → numbers.
 
-Means:
+WHY TEXT MUST BECOME NUMBERS
 
-from beginning
-up to train_size
-train_size:
+Neural networks understand:
 
-Means:
+vectors
+matrices
+numbers
 
-from train_size
-till end
-CELL 4 — CREATE DATASET
-
-This is the MOST IMPORTANT part.
-
-def create_dataset(dataset):
-
-Function to create sequences.
-
-WHY SEQUENCES?
-
-RNN needs past time steps.
-
-The model learns:
-
-Last 60 days → predict next day
-
-EMPTY LISTS
-X = []
-y = []
-X = inputs
-y = outputs
-LOOP
-for i in range(60, len(dataset)):
-
-Starts from 60 because:
-
-first prediction needs previous 60 days
-INPUT SEQUENCE
-X.append(dataset[i-60:i, 0])
-
-Suppose:
-
-[1,2,3,4,5]
-
-If current index = 5
-then input becomes previous values.
-
-TARGET OUTPUT
-y.append(dataset[i, 0])
-
-Target = next day price.
-
-EXAMPLE
-
-Suppose data:
-
-[10,11,12,13,14,15]
-
-Input:
-
-[10,11,12,13,14]
-
-Output:
-
-15
-CONVERT TO ARRAYS
-return np.array(X), np.array(y)
-
-Machine learning models use NumPy arrays.
-
-CREATING TRAIN/TEST SETS
-X_train, y_train = create_dataset(train_data)
-X_test, y_test = create_dataset(test_data)
-FINAL SHAPE BEFORE RNN
-
-Suppose:
-
-100 samples
-each sample = 60 days
-
-Then:
-
-X_train.shape = (100,60)
-CELL 5 — RESHAPING FOR RNN
-X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-VERY IMPORTANT CONCEPT
-
-RNN expects 3D input:
-
-(samples, timesteps, features)
-WHAT EACH DIMENSION MEANS
+NOT text.
 
 Example:
 
-(100, 60, 1)
+"good movie"
 
-means:
+becomes something like:
 
-100 training examples
-60 days each
-1 feature (Open price)
-WHY 3D?
+[0.2, 0.7, 0.0, 0.4]
+KERAS IMPORTS
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 
-RNN processes sequences step-by-step.
+Used for deep learning.
 
-Each timestep contains features.
+SEQUENTIAL MODEL
+Sequential
 
-CELL 6 — BUILD MODEL
+Means:
+layers are added one after another.
+
+Example:
+
+Input → Hidden Layer → Output
+DENSE LAYER
+Dense
+
+Dense = Fully connected neural network layer.
+
+Every neuron connects to all neurons in next layer.
+
+CELL 2 — LOAD DATASET
+df = pd.read_csv(
+    "IMDB_Dataset.csv",
+    encoding_errors='ignore',
+    on_bad_lines='skip',
+    engine='python'
+)
+
+Reads dataset from CSV file.
+
+WHAT IS CSV?
+
+CSV = Comma Separated Values
+
+Example:
+
+review,sentiment
+good movie,positive
+bad movie,negative
+encoding_errors='ignore'
+
+Sometimes dataset contains strange characters.
+
+Example:
+
+emojis
+broken unicode
+corrupted symbols
+
+This ignores those errors.
+
+on_bad_lines='skip'
+
+If some rows are corrupted:
+
+skip them
+avoid crashing
+engine='python'
+
+Uses Python CSV parser.
+
+Safer for complex datasets.
+
+PRINTING DATA
+print(df.head())
+
+Shows first 5 rows.
+
+Example:
+
+review	sentiment
+good movie	positive
+PRINTING COLUMNS
+print(df.columns)
+
+Shows column names.
+
+Example:
+
+['review', 'sentiment']
+CELL 3 — REMOVE MISSING VALUES
+df = df.dropna()
+WHAT IS NaN?
+
+NaN = Missing value.
+
+Example:
+
+review	sentiment
+good movie	positive
+NaN	negative
+WHY REMOVE MISSING VALUES?
+
+Neural networks cannot learn from empty data.
+
+UNIQUE VALUES
+print(df['sentiment'].unique())
+
+Shows unique labels.
+
+Output:
+
+['positive', 'negative']
+CHECK NULL VALUES
+print(df['sentiment'].isnull().sum())
+
+Counts missing values.
+
+CELL 4 — FIX COLUMN NAMES
+df.columns = ['review', 'sentiment']
+
+Renames columns.
+
+Why?
+
+Sometimes datasets contain:
+
+spaces
+weird names
+formatting issues
+
+This standardizes names.
+
+CELL 5 — CLEAN TEXT
+
+MOST IMPORTANT preprocessing step.
+
+FUNCTION
+def clean_text(text):
+
+Creates text cleaning function.
+
+CONVERT TO STRING
+text = str(text)
+
+Ensures every value is text.
+
+Sometimes reviews may contain:
+
+numbers
+null values
+LOWERCASE
+text = text.lower()
+
+Converts:
+
+"GOOD Movie"
+
+to:
+
+"good movie"
+WHY LOWERCASE?
+
+Without lowercase:
+
+"Good"
+"GOOD"
+"good"
+
+would be treated as different words.
+
+REMOVE HTML TAGS
+text = re.sub(r'<.*?>', '', text)
+WHAT IS HTML?
+
+Example:
+
+<br>
+<p>Hello</p>
+
+Dataset reviews may contain HTML formatting.
+
+REGEX EXPLANATION
+r'<.*?>'
+
+Matches anything inside < >
+
+Example:
+
+<p>Hello</p>
+
+becomes:
+
+Hello
+REMOVE SYMBOLS
+text = re.sub(r'[^a-zA-Z ]', '', text)
+WHAT DOES THIS REGEX MEAN?
+[^a-zA-Z ]
+
+Means:
+remove everything except:
+
+a-z
+A-Z
+spaces
+EXAMPLE
+
+Before:
+
+"Movie was awesome!!! 10/10"
+
+After:
+
+"Movie was awesome"
+RETURN CLEAN TEXT
+return text
+APPLY FUNCTION
+df['review'] = df['review'].apply(clean_text)
+
+Applies cleaning function to every review.
+
+CELL 6 — CONVERT LABELS
+df['sentiment'] = df['sentiment'].map({'positive': 1, 'negative': 0})
+
+VERY IMPORTANT.
+
+WHY CONVERT LABELS?
+
+Neural networks understand numbers only.
+
+So:
+
+Text	Number
+positive	1
+negative	0
+THIS IS BINARY CLASSIFICATION
+
+Only two classes:
+
+positive
+negative
+COUNT LABELS
+print(df['sentiment'].value_counts())
+
+Shows number of:
+
+positive reviews
+negative reviews
+CELL 7 — TF-IDF VECTORIZATION
+
+MOST IMPORTANT NLP CONCEPT.
+
+vectorizer = TfidfVectorizer(max_features=5000)
+WHAT IS TF-IDF?
+
+TF-IDF =
+
+Term Frequency - Inverse Document Frequency
+
+Used to convert text into meaningful numerical vectors.
+
+WHY NOT SIMPLE WORD COUNT?
+
+Simple count has problems.
+
+Example:
+
+the movie was good
+
+Words like:
+
+the
+was
+
+appear everywhere.
+
+They are not useful.
+
+TF-IDF reduces importance of common words.
+
+TWO MAIN PARTS
+1. TF (Term Frequency)
+
+Measures:
+
+how often word appears in document
+
+Formula:
+
+TF(t)=
+Total terms in document
+Number of times term t appears in document
+	​
+
+
+2. IDF (Inverse Document Frequency)
+
+Measures:
+
+how unique/rare word is
+
+Formula:
+
+IDF(t)=log(
+Documents containing term t
+Total Documents
+	​
+
+)
+
+FINAL TF-IDF SCORE
+
+TF-IDF(t)=TF(t)×IDF(t)
+
+EXAMPLE
+
+Suppose:
+
+Review:
+
+"movie was amazing"
+
+Vector becomes:
+
+amazing	boring	movie
+0.8	0.0	0.2
+max_features=5000
+
+Keeps only top 5000 important words.
+
+Why?
+
+Without limit:
+
+vocabulary becomes huge
+memory usage increases
+training becomes slow
+FIT + TRANSFORM
+X = vectorizer.fit_transform(df['review']).toarray()
+WHAT DOES THIS DO?
+fit
+
+Learns vocabulary.
+
+Example:
+
+amazing
+bad
+boring
+transform
+
+Converts reviews into vectors.
+
+.toarray()
+
+Converts sparse matrix → normal NumPy array.
+
+X AND y
+X = input features
+y = labels
+EXAMPLE OF X
+
+Each review becomes:
+
+[0.0, 0.2, 0.9, 0.0, ...]
+
+5000 numbers per review.
+
+CELL 8 — TRAIN TEST SPLIT
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+test_size=0.2
+
+20% data for testing.
+
+80% for training.
+
+WHY TEST DATA IS IMPORTANT
+
+Without test data:
+
+we cannot measure real performance
+
+Model may memorize training data.
+
+random_state=42
+
+Ensures same split every run.
+
+Makes results reproducible.
+
+CELL 9 — BUILD MODEL
 model = Sequential()
 
 Creates neural network.
 
-FIRST RNN LAYER
-model.add(SimpleRNN(50, return_sequences=True, input_shape=(60,1)))
-BREAKDOWN
-50
+FIRST LAYER
+model.add(Dense(128, activation='relu', input_shape=(X_train.shape[1],)))
+WHAT IS DENSE(128)?
 
-Number of neurons.
+128 neurons.
 
-More neurons:
+Each neuron learns patterns.
 
-more learning capacity
-more computation
-input_shape=(60,1)
+INPUT SHAPE
+X_train.shape[1]
 
-Means:
+Number of TF-IDF features.
 
-60 time steps
-1 feature
-return_sequences=True
+Usually:
 
-Very important.
+5000
+ACTIVATION FUNCTION = RELU
+activation='relu'
 
-This tells layer:
+Formula:
 
-pass entire sequence to next RNN layer
+ReLU(x)=max(0,x)
 
-Without this:
+HOW RELU WORKS
+Input	Output
+-5	0
+3	3
+WHY RELU?
 
-next RNN layer cannot receive sequential data
-SECOND RNN LAYER
-model.add(SimpleRNN(50))
+Advantages:
 
-Another RNN layer.
+fast
+simple
+reduces vanishing gradient
+SECOND LAYER
+model.add(Dense(64, activation='relu'))
 
-This layer outputs final representation.
+Another hidden layer.
 
-DENSE OUTPUT LAYER
-model.add(Dense(1))
+Learns deeper patterns.
 
-Final output:
+OUTPUT LAYER
+model.add(Dense(1, activation='sigmoid'))
 
-one predicted price
-MODEL ARCHITECTURE
+VERY IMPORTANT.
 
-Flow:
+WHY 1 NEURON?
 
-Input(60 days)
-      ↓
-RNN Layer
-      ↓
-RNN Layer
-      ↓
-Dense Layer
-      ↓
-Predicted Price
+Binary classification:
+
+positive
+negative
+
+Need only one probability.
+
+SIGMOID ACTIVATION
+
+Formula:
+
+σ(x)=
+1+e
+−x
+1
+	​
+
+
+OUTPUT RANGE
+
+Sigmoid outputs:
+
+0 to 1
+
+Example:
+
+Output	Meaning
+0.95	Positive
+0.02	Negative
 COMPILE MODEL
-model.compile(optimizer='adam', loss='mean_squared_error')
+model.compile(
+    optimizer='adam',
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
 OPTIMIZER = ADAM
 
 Adam updates neural network weights.
 
 Goal:
 
-minimize error
-
-Adam is popular because:
-
-fast
-stable
-adaptive learning rate
+reduce prediction error
 LOSS FUNCTION
-mean_squared_error
+binary_crossentropy
 
-Measures prediction error.
+Used for binary classification.
 
 Formula:
 
-MSE=
-n
+Loss=−
+N
 1
 	​
 
 ∑
 i=1
-n
+N
 	​
 
-(y
+[y
 i
 	​
 
-−
+log(
 y
 ^
 	​
@@ -584,16 +672,11 @@ y
 i
 	​
 
-)
-2
-
-Where:
-
-y
+)+(1−y
 i
 	​
 
- = actual value
+)log(1−
 y
 ^
 	​
@@ -601,227 +684,224 @@ y
 i
 	​
 
- = predicted value
-WHY SQUARE ERROR?
+)]
 
-Large mistakes become heavily penalized.
+WHAT LOSS MEANS
 
-Example:
+Measures:
 
-error 10 → squared = 100
+how wrong predictions are
+
+Smaller loss = better model.
+
+METRICS
+accuracy
+
+Measures:
+
+correct predictions / total predictions
 MODEL SUMMARY
 model.summary()
 
 Shows:
 
 layers
+neurons
 parameters
-output shapes
-CELL 7 — TRAINING
-model.fit(X_train, y_train, epochs=20, batch_size=32)
+CELL 10 — TRAIN MODEL
+history = model.fit(
+    X_train, y_train,
+    epochs=10,
+    batch_size=32,
+    validation_data=(X_test, y_test)
+)
 WHAT IS TRAINING?
 
 Training means:
 
-model predicts
-compares with actual
-calculates error
-updates weights
-
-This repeats many times.
-
+predict sentiment
+compare with real label
+calculate error
+update weights
+repeat
 EPOCHS
-epochs=20
+epochs=10
 
-Means:
+Entire dataset processed 10 times.
 
-entire dataset processed 20 times
-
-More epochs:
-
-more learning
-but possible overfitting
 BATCH SIZE
 batch_size=32
 
-Instead of training on all data together:
-
-train on 32 samples at once
+Model trains on 32 samples at once.
 
 Benefits:
 
 faster
-less memory usage
-HOW TRAINING WORKS
+memory efficient
+VALIDATION DATA
+validation_data=(X_test, y_test)
 
-For each batch:
+Checks performance after every epoch.
 
-Forward propagation
-Prediction
-Error calculation
-Backpropagation
-Weight update
-BACKPROPAGATION
+HISTORY OBJECT
 
-Neural network learns by adjusting weights.
+Stores:
 
-Goal:
+training accuracy
+validation accuracy
+losses
 
-reduce loss gradually
-CELL 8 — PREDICTION
-predicted = model.predict(X_test)
+Used later for graphs.
 
-Model predicts stock prices.
+CELL 11 — PLOT GRAPH
+plt.plot(history.history['accuracy'])
 
-OUTPUT IS STILL SCALED
+Plots training accuracy.
 
-Values are between:
+VALIDATION ACCURACY
+plt.plot(history.history['val_accuracy'])
 
-0 and 1
+Plots testing accuracy.
 
-Need original prices back.
+WHY THIS GRAPH IS IMPORTANT
 
-INVERSE TRANSFORM
-predicted = scaler.inverse_transform(predicted)
+Helps detect:
 
-Converts scaled values → real stock prices.
+overfitting
+underfitting
+OVERFITTING
 
-SAME FOR REAL VALUES
-real = scaler.inverse_transform(y_test.reshape(-1,1))
-WHY RESHAPE AGAIN?
+Model memorizes training data.
 
-inverse_transform expects 2D data.
+Symptoms:
 
-CELL 9 — PLOTTING
-plt.plot(real, color='red', label='Real Price')
+training accuracy high
+validation accuracy low
+UNDERFITTING
 
-Red line = actual prices.
+Model learns poorly.
 
-plt.plot(predicted, color='blue', label='Predicted Price')
+Symptoms:
 
-Blue line = predicted prices.
-
-TITLE
-plt.title("Google Stock Price Prediction (RNN)")
-
-Adds graph title.
-
-X LABEL
-plt.xlabel("Time")
-
-Horizontal axis = time.
-
-Y LABEL
-plt.ylabel("Price")
-
-Vertical axis = stock price.
-
+both accuracies low
 LEGEND
 plt.legend()
 
-Shows:
+Shows line labels.
 
-red = real
-blue = predicted
-SHOW GRAPH
-plt.show()
+CELL 12 — FINAL EVALUATION
+loss, accuracy = model.evaluate(X_test, y_test)
 
-Displays graph.
+Tests final model performance.
 
-WHAT THE GRAPH TELLS
+OUTPUT
 
-If blue line follows red line closely:
+Example:
 
-model is good
+Accuracy: 0.88
 
-If far apart:
+Means:
 
-model performs poorly
-IMPORTANT CONCEPTS USED
-1. TIME SERIES
+88% reviews classified correctly
+COMPLETE PIPELINE SUMMARY
+STEP 1 — Load reviews
+"Movie was amazing"
 
-Data changes over time.
+↓
 
-Examples:
+STEP 2 — Clean text
+"movie was amazing"
 
-stock prices
-weather
-sales
-2. SEQUENCE LEARNING
+↓
 
-Using previous values to predict next value.
+STEP 3 — Convert labels
+positive → 1
+negative → 0
 
-3. NORMALIZATION
+↓
 
-Scaling data between 0 and 1.
+STEP 4 — TF-IDF Vectorization
+text → numerical vectors
 
-4. RNN MEMORY
+↓
 
-RNN remembers previous time steps.
+STEP 5 — Train Neural Network
 
-5. TRAINING VS TESTING
+Learns patterns like:
 
-Training:
+amazing → positive
+boring → negative
 
-learning phase
+↓
 
-Testing:
+STEP 6 — Predict Sentiment
 
-evaluation phase
-LIMITATIONS OF THIS MODEL
+Output:
 
-This notebook uses SimpleRNN which has problems:
+0.98 → Positive
+0.01 → Negative
+IMPORTANT MACHINE LEARNING CONCEPTS USED
+1. NLP (Natural Language Processing)
 
-vanishing gradients
-weak long-term memory
+Processing human language using AI.
 
-Better alternatives:
+2. TF-IDF
+
+Converts text into weighted vectors.
+
+3. Binary Classification
+
+Only two classes.
+
+4. Neural Networks
+
+Deep learning model learns patterns.
+
+5. Activation Functions
+
+ReLU and Sigmoid.
+
+6. Loss Function
+
+Measures prediction error.
+
+7. Backpropagation
+
+Updates neural network weights.
+
+POSSIBLE IMPROVEMENTS
+
+This notebook is basic.
+
+Better approaches:
 
 LSTM
 GRU
-WHY STOCK PREDICTION IS HARD
+BERT
+Transformers
+WHY TF-IDF HAS LIMITATIONS
 
-Stock prices depend on:
+TF-IDF:
 
-news
-economy
-investor sentiment
-world events
+ignores word order
+ignores context
 
-Using only previous prices is limited.
+Example:
 
-POSSIBLE IMPROVEMENTS
-Use LSTM instead of SimpleRNN
+"not good"
 
-Better memory handling.
+TF-IDF may wrongly treat “good” as positive.
 
-Add More Features
+Modern NLP models solve this.
 
-Instead of only Open price:
+FINAL UNDERSTANDING
 
-Close
-Volume
-High
-Low
-Add Technical Indicators
+This notebook teaches:
 
-Examples:
-
-Moving Average
-RSI
-MACD
-Use More Data
-
-More historical data improves learning.
-
-FINAL SUMMARY
-
-This notebook:
-
-Reads Google stock prices
-Cleans and scales data
-Creates 60-day sequences
-Builds RNN model
-Trains neural network
-Predicts future prices
-Compares predicted vs actual prices using graph
+✅ Text preprocessing
+✅ NLP basics
+✅ TF-IDF vectorization
+✅ Binary sentiment classification
+✅ Neural networks for NLP
+✅ Deep learning training pipeline
+✅ Model evaluation and visualization
