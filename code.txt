@@ -1,669 +1,827 @@
-🌟 Complete Detailed Explanation of Fashion MNIST CNN Code
-This project builds a:
-Deep Learning Image Classification Model
-using:
+This notebook builds a Recurrent Neural Network (RNN) model to predict Google stock prices using previous stock prices.
 
+I’ll explain every line, concept, and logic in very small details.
 
-TensorFlow
+OVERALL GOAL OF THIS PROJECT
 
+The notebook tries to answer:
 
-Keras
+“Can we predict tomorrow’s Google stock opening price using previous 60 days’ prices?”
 
+This is a Time Series Forecasting problem because:
 
-CNN (Convolutional Neural Network)
+Data changes over time
+Previous values influence future values
 
-
-Goal:
-Identify clothing images
-from the:
-Fashion MNIST Dataset
-
-🌟 WHAT IS FASHION MNIST?
-Fashion MNIST is an image dataset created by:
-Zalando Research Fashion MNIST
-It contains:
-70,000 grayscale images
-Each image:
-28 × 28 pixels
-
-🌟 CLASSES IN DATASET
-There are:
-10 clothing categories
-LabelClass0T-shirt/top1Trouser2Pullover3Dress4Coat5Sandal6Shirt7Sneaker8Bag9Ankle boot
-
-🌟 WHAT IS IMAGE CLASSIFICATION?
-Input:
-image
-Output:
-class label
 Example:
-Image:
-👟
-Prediction:
-Sneaker
 
-🌟 IMPORT LIBRARIES
+Day	Open Price
+Day 1	100
+Day 2	102
+Day 3	101
+Day 4	?
 
-✅ Pandas
-import pandas as pd
-Used for:
+The model learns patterns from past prices.
 
+WHAT IS RNN?
 
-reading CSV files
+RNN = Recurrent Neural Network
 
+It is a neural network specially designed for:
 
-handling tables
+sequential data
+time series
+speech
+text
+stock prices
 
+Why?
 
+Because RNN remembers previous information.
 
-✅ NumPy
+Unlike normal neural networks:
+
+Traditional NN → treats all inputs independently
+RNN → remembers previous inputs
+
+Example:
+
+To predict today’s stock price:
+
+yesterday’s price matters
+last week’s trend matters
+last 60 days matter
+
+RNN captures this sequence dependency.
+
+COMPLETE FLOW OF NOTEBOOK
+
+The notebook performs these steps:
+
+Import libraries
+Load dataset
+Extract Open prices
+Normalize data
+Split train/test
+Create sequences of 60 days
+Reshape data for RNN
+Build RNN model
+Train model
+Predict prices
+Convert predictions back to original scale
+Plot graph
+CELL 0 — IMPORT LIBRARIES
 import numpy as np
-Used for:
+import pandas as pd
+import matplotlib.pyplot as plt
 
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, SimpleRNN
+1. NUMPY
+import numpy as np
+
+NumPy is used for:
 
 arrays
+numerical computations
+matrix operations
 
+Why needed?
 
-matrices
+Deep learning models work efficiently with arrays.
 
-
-numerical operations
-
-
-
-✅ Matplotlib
-import matplotlib.pyplot as plt
-Used for:
-
-
-plotting images
-
-
-graphs
-
-
-
-✅ TensorFlow / Keras Layers
-from tensorflow.keras import layers
-Provides:
-
-
-Conv2D
-
-
-Dense
-
-
-MaxPooling
-
-
-Dropout
-
-
-
-✅ Sequential
-from tensorflow.keras.models import Sequential
-Creates:
-layer-by-layer neural network
-
-✅ train_test_split
-from sklearn.model_selection import train_test_split
-Used to split:
-
-
-training data
-
-
-validation data
-
-
-
-🌟 LOAD DATASET
-
-df_test = pd.read_csv(...)df_train = pd.read_csv(...)
-Reads:
-
-
-training CSV
-
-
-testing CSV
-
-
-Dataset stored as:
-DataFrames
-
-🌟 DATA FORMAT
-Each row contains:
-labelpixel1pixel2...500...
-
-🌟 Label
-First column:
-clothing category
-
-🌟 Pixels
-Remaining:
-784 pixel values
-Because:
-28×28=78428 \times 28 = 78428×28=784
-
-🌟 CONVERT TO NUMPY ARRAYS
-test = np.array(df_test,dtype="float32")train = np.array(df_train,dtype="float32")
-Converts DataFrame into:
-NumPy arrays
-
-🌟 Why float32?
-Neural networks work efficiently with:
-floating point values
-
-🌟 FEATURES AND LABELS
-
-✅ Input Images
-x_train = train[:,1:]
-Selects:
-all columns except first
-These are:
-pixel values
-
-✅ Labels
-y_train = train[:,0]
-First column:
-class labels
-
-🌟 SAME FOR TEST DATA
-x_testy_test
-
-🌟 IMAGE RESHAPING
-
-x_train.reshape(-1, 28, 28, 1)
-VERY IMPORTANT.
-
-🌟 Why Reshape Needed?
-Initially:
-784-dimensional vector
-CNN expects:
-image format
-
-🌟 Shape Meaning
-(samples, height, width, channels)
-
-🌟 Here
-28 = height28 = width1 = grayscale channel
-
-🌟 -1 Meaning
-Automatically determine:
-number of images
-
-🌟 TRAIN VALIDATION SPLIT
-
-train_test_split(...)
-Splits training data into:
-
-
-train set
-
-
-validation set
-
-
-
-🌟 Why Validation Set?
-Used to:
-check model performance during training
-Helps detect:
-
-
-overfitting
-
-
-underfitting
-
-
-
-🌟 VISUALIZE IMAGES
-
-plt.imshow(...)
-Displays images.
-
-🌟 subplot
-plt.subplot(7,7,i+1)
-Creates:
-7×7 image grid
-
-🌟 class_names
-Maps numeric labels to:
-human-readable clothing names
 Example:
-0 → T-shirt
 
-🌟 IMAGE PREPROCESSING
+arr = np.array([1,2,3])
+2. PANDAS
+import pandas as pd
 
-🌟 Image Size
-imageSize = 28
-Target image dimensions.
+Pandas is used for:
 
-🌟 Batch Size
-batchSize = 16
-Number of images processed together.
+reading CSV files
+handling tables/dataframes
+cleaning data
 
-🌟 Resizing Layer
-layers.Resizing(imageSize, imageSize)
-Ensures all images:
-same dimensions
+Example:
 
-🌟 Rescaling Layer
-layers.Rescaling(1.0/imageSize)
-Normalizes pixel values.
+Date	Open
+1-Jan	100
 
-🌟 Why Scaling Important?
-Original pixels:
-0 → 255
-After scaling:
-0 → 1
-Neural networks train better.
+This table becomes a Pandas DataFrame.
 
-🌟 DATA AUGMENTATION
+3. MATPLOTLIB
+import matplotlib.pyplot as plt
 
-data_aug = Sequential([...])
-Artificially creates:
-new training images
+Used for plotting graphs.
 
-🌟 RandomFlip
-layers.RandomFlip(...)
-Flips images:
+Later:
+
+red line = real prices
+blue line = predicted prices
+4. MINMAXSCALER
+from sklearn.preprocessing import MinMaxScaler
+
+Used for normalization/scaling.
+
+Neural networks work better when data is small.
+
+Example:
+
+Original prices:
+
+1000, 1200, 1500
+
+Scaled between 0 and 1:
+
+0.0, 0.4, 1.0
+WHY SCALING IS IMPORTANT
+
+Without scaling:
+
+gradients become unstable
+training becomes slow
+optimization becomes difficult
+
+Scaling improves:
+
+convergence speed
+learning efficiency
+accuracy
+5. SEQUENTIAL MODEL
+from tensorflow.keras.models import Sequential
+
+Sequential means:
+
+layers are added one after another
+
+Like:
+
+Input → RNN → RNN → Dense → Output
+
+6. DENSE LAYER
+from tensorflow.keras.layers import Dense
+
+Dense = Fully connected layer.
+
+Used for final prediction.
+
+Example:
+
+50 neurons → 1 output price
+7. SIMPLERNN
+from tensorflow.keras.layers import SimpleRNN
+
+This is the actual RNN layer.
+
+It processes sequential/time data.
+
+CELL 1 — LOAD DATASET
+df = pd.read_csv("Google_Stock_Price.csv", thousands=',')
+
+Reads CSV file.
+
+WHAT IS CSV?
+
+CSV = Comma Separated Values
+
+Example:
+
+Date,Open,Close
+1-Jan,1000,1010
+thousands=','
+
+Some prices may contain commas.
+
+Example:
+
+1,234.56
+
+This tells pandas:
+
+commas are separators
+not text
+DATAFRAME
+
+After reading:
+
+df
+
+becomes something like:
+
+Date	Open	High	Low	Close
+TAKING ONLY OPEN COLUMN
+data = df['Open'].values.reshape(-1, 1)
+WHY ONLY OPEN?
+
+The notebook predicts:
+
+opening stock price
+
+So only “Open” feature is used.
+
+df['Open']
+
+Extracts Open column.
+
+Example:
+
+[100, 102, 101]
+.values
+
+Converts pandas series → NumPy array.
+
+.reshape(-1,1)
+
+Very important.
+
+Transforms:
+
+[100,102,101]
+
+into:
+
+[[100],
+ [102],
+ [101]]
+
+Why?
+
+Machine learning models expect 2D arrays.
+
+WHAT DOES -1 MEAN?
+
+Python automatically calculates row count.
+
+Example:
+
+reshape(-1,1)
+
+means:
+
+unknown rows
+exactly 1 column
+CELL 2 — SCALING DATA
+scaler = MinMaxScaler(feature_range=(0,1))
+
+Creates scaler object.
+
+WHAT DOES THIS DO?
+
+Uses formula:
+
+x
+scaled
+	​
+
+=
+x
+max
+	​
+
+−x
+min
+	​
+
+x−x
+min
+	​
+
+	​
 
 
-horizontally
+This converts all values between 0 and 1.
 
+CLEANING DATA
+data = pd.to_numeric(df['Open'], errors='coerce').dropna().values.reshape(-1, 1)
+pd.to_numeric()
 
-vertically
+Converts values into numbers.
 
+errors='coerce'
 
+If invalid values exist:
 
-🌟 RandomRotation
-layers.RandomRotation(0.3)
-Rotates images randomly.
+Example:
 
-🌟 Why Augmentation?
-Prevents:
-overfitting
-Makes model:
-more robust
+"GOOGL"
 
-🌟 CNN MODEL
+It becomes:
 
-🌟 What is CNN?
-CNN =
-Convolutional Neural Network
-Best for:
+NaN
 
+instead of crashing.
 
-image recognition
+.dropna()
 
+Removes NaN values.
 
-computer vision
+WHY CLEANING IS IMPORTANT
 
+Neural networks cannot train on:
 
+text
+missing values
+corrupted data
+SCALING
+data_scaled = scaler.fit_transform(data)
 
-🌟 Why CNN Good for Images?
-CNN automatically learns:
+Two operations happen:
 
+fit
+learns min/max
+transform
+scales data
+EXAMPLE
 
-edges
+Original:
 
+Price
+100
+200
+300
 
-textures
+Scaled:
 
+Price
+0.0
+0.5
+1.0
+CELL 3 — TRAIN TEST SPLIT
+train_size = int(len(data_scaled) * 0.8)
 
-shapes
+Uses:
 
+80% for training
+20% for testing
+WHY SPLIT DATA?
 
-patterns
+Training data:
 
+model learns patterns
 
+Testing data:
 
-🌟 MODEL ARCHITECTURE
+checks performance on unseen data
+EXAMPLE
 
-model = Sequential([...])
-Layers added sequentially.
+If 1000 rows:
 
-🌟 INPUT LAYER
-layers.Input(shape=(28,28,1))
-Input image shape.
+800 → training
+200 → testing
+SPLITTING
+train_data = data_scaled[:train_size]
+test_data = data_scaled[train_size:]
+:train_size
 
-🌟 CONVOLUTION LAYER
-layers.Conv2D(...)
-MOST IMPORTANT CNN layer.
-
-🌟 What Conv2D Does?
-Applies:
-filters/kernels
-to detect:
-
-
-edges
-
-
-corners
-
-
-patterns
-
-
-
-🌟 FILTERS
-filters = 64
 Means:
-64 feature detectors
 
-🌟 KERNEL SIZE
-kernel_size = 5
-Filter size:
-5×5
+from beginning
+up to train_size
+train_size:
 
-🌟 ACTIVATION FUNCTION
-activation="relu"
-ReLU formula:
-f(x)=max⁡(0,x)f(x)=\max(0,x)f(x)=max(0,x)
+Means:
 
-🌟 Why ReLU?
-Advantages:
+from train_size
+till end
+CELL 4 — CREATE DATASET
 
+This is the MOST IMPORTANT part.
+
+def create_dataset(dataset):
+
+Function to create sequences.
+
+WHY SEQUENCES?
+
+RNN needs past time steps.
+
+The model learns:
+
+Last 60 days → predict next day
+
+EMPTY LISTS
+X = []
+y = []
+X = inputs
+y = outputs
+LOOP
+for i in range(60, len(dataset)):
+
+Starts from 60 because:
+
+first prediction needs previous 60 days
+INPUT SEQUENCE
+X.append(dataset[i-60:i, 0])
+
+Suppose:
+
+[1,2,3,4,5]
+
+If current index = 5
+then input becomes previous values.
+
+TARGET OUTPUT
+y.append(dataset[i, 0])
+
+Target = next day price.
+
+EXAMPLE
+
+Suppose data:
+
+[10,11,12,13,14,15]
+
+Input:
+
+[10,11,12,13,14]
+
+Output:
+
+15
+CONVERT TO ARRAYS
+return np.array(X), np.array(y)
+
+Machine learning models use NumPy arrays.
+
+CREATING TRAIN/TEST SETS
+X_train, y_train = create_dataset(train_data)
+X_test, y_test = create_dataset(test_data)
+FINAL SHAPE BEFORE RNN
+
+Suppose:
+
+100 samples
+each sample = 60 days
+
+Then:
+
+X_train.shape = (100,60)
+CELL 5 — RESHAPING FOR RNN
+X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+VERY IMPORTANT CONCEPT
+
+RNN expects 3D input:
+
+(samples, timesteps, features)
+WHAT EACH DIMENSION MEANS
+
+Example:
+
+(100, 60, 1)
+
+means:
+
+100 training examples
+60 days each
+1 feature (Open price)
+WHY 3D?
+
+RNN processes sequences step-by-step.
+
+Each timestep contains features.
+
+CELL 6 — BUILD MODEL
+model = Sequential()
+
+Creates neural network.
+
+FIRST RNN LAYER
+model.add(SimpleRNN(50, return_sequences=True, input_shape=(60,1)))
+BREAKDOWN
+50
+
+Number of neurons.
+
+More neurons:
+
+more learning capacity
+more computation
+input_shape=(60,1)
+
+Means:
+
+60 time steps
+1 feature
+return_sequences=True
+
+Very important.
+
+This tells layer:
+
+pass entire sequence to next RNN layer
+
+Without this:
+
+next RNN layer cannot receive sequential data
+SECOND RNN LAYER
+model.add(SimpleRNN(50))
+
+Another RNN layer.
+
+This layer outputs final representation.
+
+DENSE OUTPUT LAYER
+model.add(Dense(1))
+
+Final output:
+
+one predicted price
+MODEL ARCHITECTURE
+
+Flow:
+
+Input(60 days)
+      ↓
+RNN Layer
+      ↓
+RNN Layer
+      ↓
+Dense Layer
+      ↓
+Predicted Price
+COMPILE MODEL
+model.compile(optimizer='adam', loss='mean_squared_error')
+OPTIMIZER = ADAM
+
+Adam updates neural network weights.
+
+Goal:
+
+minimize error
+
+Adam is popular because:
 
 fast
+stable
+adaptive learning rate
+LOSS FUNCTION
+mean_squared_error
 
+Measures prediction error.
 
-avoids vanishing gradients
-
-
-introduces non-linearity
-
-
-
-🌟 PADDING='same'
-Output size remains:
-same as input
-
-🌟 MAXPOOLING
-layers.MaxPooling2D(pool_size=3)
-Reduces image dimensions.
-
-🌟 Purpose
-
-
-reduces computation
-
-
-extracts important features
-
-
-prevents overfitting
-
-
-
-🌟 Example
-From:
-3×3 region
-take:
-maximum value
-
-🌟 SECOND CONV LAYER
-filters = 128kernel_size = 7
-Learns:
-more complex patterns
-
-🌟 THIRD CONV LAYER
-filters = 32kernel_size = 3
-Further feature extraction.
-
-🌟 DROPOUT
-layers.Dropout(0.2)
-Randomly disables:
-20% neurons
-during training.
-
-🌟 Why Dropout?
-Prevents:
-overfitting
-
-🌟 FLATTEN
-layers.Flatten()
-Converts:
-2D feature maps → 1D vector
-Needed before Dense layers.
-
-🌟 DENSE LAYERS
-Dense(128)Dense(32)
-Fully connected neural network layers.
-Learn:
-high-level patterns
-
-🌟 OUTPUT LAYER
-Dense(10, activation="softmax")
-10 neurons because:
-10 classes
-
-🌟 SOFTMAX
-Converts outputs into:
-probabilities
 Formula:
-σ(zi)=ezi∑jezj\sigma(z_i)=\frac{e^{z_i}}{\sum_j e^{z_j}}σ(zi​)=∑j​ezj​ezi​​
 
-🌟 Example
-Output:
-[0.01, 0.90, 0.03 ...]
-Highest probability:
-predicted class
+MSE=
+n
+1
+	​
 
-🌟 MODEL COMPILE
+∑
+i=1
+n
+	​
 
-model.compile(...)
-Configures training.
+(y
+i
+	​
 
-🌟 LOSS FUNCTION
-sparse_categorical_crossentropy
-Used for:
-multi-class classification
+−
+y
+^
+	​
 
-🌟 Why "sparse"?
-Labels are integers:
-0,1,2...
-not one-hot encoded.
+i
+	​
 
-🌟 OPTIMIZER
-adam
-Updates weights efficiently.
+)
+2
 
-🌟 METRIC
-accuracy
-Measures:
-correct predictions percentage
+Where:
 
-🌟 MODEL SUMMARY
+y
+i
+	​
+
+ = actual value
+y
+^
+	​
+
+i
+	​
+
+ = predicted value
+WHY SQUARE ERROR?
+
+Large mistakes become heavily penalized.
+
+Example:
+
+error 10 → squared = 100
+MODEL SUMMARY
 model.summary()
-Displays:
 
+Shows:
 
 layers
-
-
+parameters
 output shapes
+CELL 7 — TRAINING
+model.fit(X_train, y_train, epochs=20, batch_size=32)
+WHAT IS TRAINING?
 
+Training means:
 
-trainable parameters
+model predicts
+compares with actual
+calculates error
+updates weights
 
+This repeats many times.
 
+EPOCHS
+epochs=20
 
-🌟 TRAINING
+Means:
 
-model.fit(...)
-Trains neural network.
+entire dataset processed 20 times
 
-🌟 Epochs
-epochs = 40
-Complete dataset processed:
-40 times
+More epochs:
 
-🌟 Batch Size
-batch_size = 512
-512 images processed together.
+more learning
+but possible overfitting
+BATCH SIZE
+batch_size=32
 
-🌟 WHAT HAPPENS DURING TRAINING?
+Instead of training on all data together:
 
-Step 1
-Forward propagation.
+train on 32 samples at once
 
-Step 2
-Prediction generated.
+Benefits:
 
-Step 3
-Loss calculated.
+faster
+less memory usage
+HOW TRAINING WORKS
 
-Step 4
-Backpropagation adjusts weights.
+For each batch:
 
-🌟 BACKPROPAGATION
-Neural network learns by:
-reducing prediction error
+Forward propagation
+Prediction
+Error calculation
+Backpropagation
+Weight update
+BACKPROPAGATION
 
-🌟 LOSS GRAPH
+Neural network learns by adjusting weights.
 
-plt.plot(history.history["loss"])
-Shows:
-how error decreases
+Goal:
 
-🌟 ACCURACY GRAPH
-Shows:
-learning improvement
+reduce loss gradually
+CELL 8 — PREDICTION
+predicted = model.predict(X_test)
 
-🌟 EVALUATION
+Model predicts stock prices.
 
-model.evaluate(...)
-Tests model on:
-validation data
-Returns:
+OUTPUT IS STILL SCALED
 
+Values are between:
 
-loss
+0 and 1
 
+Need original prices back.
 
-accuracy
+INVERSE TRANSFORM
+predicted = scaler.inverse_transform(predicted)
 
+Converts scaled values → real stock prices.
 
+SAME FOR REAL VALUES
+real = scaler.inverse_transform(y_test.reshape(-1,1))
+WHY RESHAPE AGAIN?
 
-🌟 PREDICTION
+inverse_transform expects 2D data.
 
-model.predict(x_test)
-Outputs probabilities.
+CELL 9 — PLOTTING
+plt.plot(real, color='red', label='Real Price')
 
-🌟 argmax
-np.argmax(...)
-Selects:
-highest probability class
+Red line = actual prices.
 
-🌟 CONFUSION MATRIX
+plt.plot(predicted, color='blue', label='Predicted Price')
 
-confusion_matrix(...)
-Shows:
-correct vs incorrect predictions
+Blue line = predicted prices.
 
-🌟 Diagonal Values
-Correct predictions.
+TITLE
+plt.title("Google Stock Price Prediction (RNN)")
 
-🌟 Off-Diagonal
-Wrong predictions.
+Adds graph title.
 
-🌟 CLASSIFICATION REPORT
-Shows:
+X LABEL
+plt.xlabel("Time")
 
+Horizontal axis = time.
 
-precision
+Y LABEL
+plt.ylabel("Price")
 
+Vertical axis = stock price.
 
-recall
+LEGEND
+plt.legend()
 
-
-F1-score
-
-
-
-🌟 FINAL IMAGE TEST
-plt.imshow(x_test[2000])
-Displays test image.
-
-🌟 Title
-True vs Predicted
 Shows:
 
+red = real
+blue = predicted
+SHOW GRAPH
+plt.show()
 
-actual label
+Displays graph.
 
+WHAT THE GRAPH TELLS
 
-predicted label
+If blue line follows red line closely:
 
+model is good
 
+If far apart:
 
-🌟 IMPORTANT DEFINITIONS
+model performs poorly
+IMPORTANT CONCEPTS USED
+1. TIME SERIES
 
-✅ CNN
-Neural network specialized for images.
+Data changes over time.
 
-✅ Convolution
-Applying filters to detect patterns.
+Examples:
 
-✅ Kernel/Filter
-Small matrix used for feature extraction.
+stock prices
+weather
+sales
+2. SEQUENCE LEARNING
 
-✅ Pooling
-Reducing image size.
+Using previous values to predict next value.
 
-✅ Epoch
-One full training cycle.
+3. NORMALIZATION
 
-✅ Batch Size
-Samples processed together.
+Scaling data between 0 and 1.
 
-✅ Overfitting
-Model memorizes training data.
+4. RNN MEMORY
 
-✅ Dropout
-Random neuron disabling to prevent overfitting.
+RNN remembers previous time steps.
 
-🌟 COMPLETE FLOW
-Load Dataset      ↓Preprocess Images      ↓Reshape Data      ↓Data Augmentation      ↓Build CNN      ↓Compile Model      ↓Train Model      ↓Evaluate Accuracy      ↓Predict Classes      ↓Display Results
+5. TRAINING VS TESTING
 
-🌟 Viva Questions
+Training:
 
-❓ Why CNN better for images?
+learning phase
 
-CNN automatically extracts spatial features from images.
+Testing:
 
+evaluation phase
+LIMITATIONS OF THIS MODEL
 
-❓ Why use ReLU?
+This notebook uses SimpleRNN which has problems:
 
-Faster training and avoids vanishing gradients.
+vanishing gradients
+weak long-term memory
 
+Better alternatives:
 
-❓ Why softmax used?
+LSTM
+GRU
+WHY STOCK PREDICTION IS HARD
 
-Converts outputs into probabilities.
+Stock prices depend on:
 
+news
+economy
+investor sentiment
+world events
 
-❓ Why pooling used?
+Using only previous prices is limited.
 
-Reduces dimensions and computation.
+POSSIBLE IMPROVEMENTS
+Use LSTM instead of SimpleRNN
 
+Better memory handling.
 
-❓ Why dropout used?
+Add More Features
 
-Prevents overfitting.
+Instead of only Open price:
 
+Close
+Volume
+High
+Low
+Add Technical Indicators
 
-❓ What is overfitting?
+Examples:
 
-Model performs well on training but poorly on unseen data.
+Moving Average
+RSI
+MACD
+Use More Data
 
+More historical data improves learning.
 
-❓ Why reshape images?
+FINAL SUMMARY
 
-CNN expects 2D image format with channels.
+This notebook:
+
+Reads Google stock prices
+Cleans and scales data
+Creates 60-day sequences
+Builds RNN model
+Trains neural network
+Predicts future prices
+Compares predicted vs actual prices using graph
