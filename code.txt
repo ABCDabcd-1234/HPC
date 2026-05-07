@@ -1,0 +1,377 @@
+Matrix multiplication is extremely important in:
+
+
+Neural Networks
+
+
+Deep Learning
+
+
+Computer Vision
+
+
+NLP
+
+
+Transformers
+
+
+because almost all ML computations internally become matrix operations.
+
+🌟 OVERVIEW OF THE PROGRAM
+The program:
+
+
+Creates two matrices A and B
+
+
+Multiplies them sequentially
+
+
+Multiplies them again using parallel processing (OpenMP)
+
+
+Measures execution time
+
+
+Compares speedup
+
+
+Verifies correctness
+
+
+
+📚 HEADER FILES
+#include <bits/stdc++.h>
+Includes all standard C++ libraries:
+
+
+vector
+
+
+iostream
+
+
+algorithm
+
+
+etc.
+
+
+
+#include <omp.h>
+VERY IMPORTANT.
+This enables:
+
+
+OpenMP parallel programming
+
+
+multithreading support
+
+
+Without this:
+#pragma omp parallel for
+won’t work.
+
+#include <chrono>
+Used for:
+
+
+timing execution
+
+
+performance comparison
+
+
+
+🧠 USING NAMESPACE
+using namespace std;using namespace std::chrono;
+Allows direct usage:
+coutvectorhigh_resolution_clock
+without writing:
+std::
+
+🚀 MAIN FUNCTION
+int main()
+Program execution starts here.
+
+📏 MATRIX SIZE
+int N = 800;
+Creates:
+800 × 800 matrices
+Total elements:
+640000 elements per matrix
+
+📦 MATRIX DECLARATION
+vector<vector<double>> A(N, vector<double>(N));
+Creates matrix:
+A[800][800]
+
+🧠 Why double?
+double
+Stores decimal values:
+3.145.67
+More precise than int.
+
+📚 Four Matrices
+
+Matrix A
+A
+Input matrix 1.
+
+Matrix B
+B
+Input matrix 2.
+
+Sequential Result
+C_seq
+Stores normal multiplication result.
+
+Parallel Result
+C_par
+Stores OpenMP multiplication result.
+
+✅ INITIALIZATION
+A[i][j] = rand() % 100;B[i][j] = rand() % 100;
+Generates random numbers:
+0 → 99
+Example:
+A =2 51 3
+
+⏱️ SEQUENTIAL TIMING START
+auto start = high_resolution_clock::now();
+Stores current time.
+
+🌟 SEQUENTIAL MATRIX MULTIPLICATION
+for (int i = 0; i < N; i++)
+Traverses rows.
+
+for (int j = 0; j < N; j++)
+Traverses columns.
+
+for (int k = 0; k < N; k++)
+Performs dot product.
+
+🧠 Matrix Multiplication Formula
+For:
+C = A × B
+Each element:
+C[i][j] = Σ A[i][k] × B[k][j]
+
+📚 Example
+Suppose:
+A =1 23 4B =5 67 8
+Then:
+C[0][0]= (1×5) + (2×7)= 5 + 14= 19
+
+🔍 This Line
+C_seq[i][j] += A[i][k] * B[k][j];
+Accumulates sum.
+
+🧠 Complexity
+Nested loops:
+N × N × N
+Time complexity:
+O(N³)
+Very computationally expensive.
+
+⏱️ END TIME
+auto end = high_resolution_clock::now();
+Stores finish time.
+
+📏 DURATION
+duration_cast<milliseconds>
+Computes execution time.
+
+🖨️ PRINT TIME
+cout << "Sequential Time"
+Displays sequential execution time.
+
+🚀 PARALLEL MATRIX MULTIPLICATION
+
+🌟 MOST IMPORTANT LINE
+#pragma omp parallel for
+This creates multiple threads.
+
+🧠 What happens internally?
+Without OpenMP:
+1 CPU core executes all rows
+With OpenMP:
+Multiple CPU cores divide rows
+Example:
+ThreadRowsT10–199T2200–399T3400–599T4600–799
+
+🌟 Why parallelism works here?
+Each row computation is independent.
+Thread computing:
+C[0][*]
+does NOT affect:
+C[1][*]
+So safe to parallelize.
+
+🧵 THREAD EXECUTION
+Each thread computes:
+C_par[i][j]
+independently.
+No race conditions occur.
+
+⚠️ Why no critical needed?
+Because:
+Each thread writes different memory locations
+Example:
+Thread 1 → C[0][0]Thread 2 → C[1][0]
+No shared write conflicts.
+
+⏱️ PARALLEL TIME
+Measures OpenMP execution speed.
+Usually:
+parallel < sequential
+
+⚡ SPEEDUP
+duration_seq / duration_par
+Example:
+400 ms / 100 ms = 4x
+Meaning:
+Parallel version is 4 times faster
+
+✅ CORRECTNESS VERIFICATION
+bool correct = true;
+Checks whether:
+C_seq == C_par
+
+🔍 Why only first 5×5?
+for (int i = 0; i < 5; i++)
+Checking full matrix:
+800×800
+is unnecessary and slow.
+
+⚠️ Floating Point Precision
+abs(...) > 1e-6
+Because floating-point computations may differ slightly.
+
+🖨️ FINAL OUTPUT
+Example:
+Sequential Time: 420 msParallel Time: 110 msSpeedup: 3.8xResult Verified ✅
+
+🌟 WHAT IS HPC HERE?
+HPC = High Performance Computing.
+This program uses:
+
+
+multiple CPU cores
+
+
+parallel execution
+
+
+workload distribution
+
+
+to accelerate large computations.
+
+🌟 AI/ML CONNECTION
+Neural networks heavily use:
+Matrix Multiplication
+Example:
+Output = Weights × Inputs
+Every deep learning layer internally performs massive matrix operations.
+
+🧠 OPENMP CONCEPTS
+
+✅ #pragma omp parallel for
+Splits loop across threads.
+
+🧵 Example
+Loop:
+for (int i=0; i<8; i++)
+4 threads:
+ThreadIterationsT10,1T22,3T34,5T46,7
+
+🌟 Shared Memory Model
+OpenMP uses:
+Shared Memory Parallelism
+All threads access:
+ABC_par
+from same RAM.
+
+🌟 Why OpenMP is easy?
+No manual:
+
+
+thread creation
+
+
+synchronization
+
+
+scheduling
+
+
+OpenMP handles automatically.
+
+⚠️ Potential Bottleneck
+Memory access.
+CPU spends lots of time fetching:
+A[i][k]B[k][j]
+from RAM/cache.
+
+🌟 Compile Command
+g++ -fopenmp file.cpp -o output
+
+🌟 Run
+./output
+Windows:
+output.exe
+
+🎯 FINAL FLOW OF PROGRAM
+
+Step 1
+Create matrices.
+
+Step 2
+Fill with random values.
+
+Step 3
+Sequential multiplication.
+
+Step 4
+Measure time.
+
+Step 5
+Parallel multiplication using OpenMP.
+
+Step 6
+Measure time.
+
+Step 7
+Compute speedup.
+
+Step 8
+Verify correctness.
+
+🧠 Viva One-Liners
+
+What is OpenMP?
+
+OpenMP is an API for shared-memory parallel programming in C/C++.
+
+
+Why matrix multiplication important in AI/ML?
+
+Neural networks perform massive matrix multiplications during forward and backward propagation.
+
+
+Why parallelization works here?
+
+Each row computation is independent, so threads can execute simultaneously.
+
+
+Why no race condition?
+
+Each thread writes to separate matrix elements.
+
+
+What is speedup?
+
+Ratio of sequential execution time to parallel execution time.
